@@ -1,0 +1,44 @@
+name: Go Shared Lint
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        required: true
+        type: string
+        default: 1.24.0
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: toweray/.github/.github/actions/setup-go@master
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: Cache golangci-lint binary
+        id: cache-lint
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/golangci-lint
+          key: ${{ runner.os }}-golangci-lint-${{ inputs.go-version }}
+
+      - name: Install golangci-lint
+        if: steps.cache-lint.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b ~/.local/bin latest
+
+      - name: Add golangci-lint to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Run golangci-lint
+        run: |
+          golangci-lint run --timeout=5m --verbose
