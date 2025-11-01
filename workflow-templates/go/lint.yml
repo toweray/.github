@@ -9,4 +9,4 @@ jobs:
   call-lint:
     uses: toweray/.github/.github/workflows/go-shared-lint.yml@master
     with:
-      go-version: 1.24.0
+      go-version: 1.25.0
