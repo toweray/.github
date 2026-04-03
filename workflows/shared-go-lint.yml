@@ -1,0 +1,25 @@
+name: Lint
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: Go version
+        required: false
+        type: string
+        default: '1.25.0'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: toweray/.github/actions/setup-go@master
+        with:
+          go-version: ${{ inputs.go-version }}
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        with:
+          version: latest
+          args: ./...
