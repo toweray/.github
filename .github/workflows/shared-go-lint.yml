@@ -24,10 +24,13 @@ jobs:
           go-version: ${{ inputs.go-version }}
 
       - name: Configure private modules
-        if: ${{ secrets.NETRC_CREDENTIALS != '' }}
+        env:
+          NETRC_CREDENTIALS: ${{ secrets.NETRC_CREDENTIALS }}
+          GO_PRIVATE: ${{ secrets.GO_PRIVATE }}
+        if: env.NETRC_CREDENTIALS != ''
         run: |
-          go env -w GOPRIVATE=${{ secrets.GO_PRIVATE }}
-          echo "${{ secrets.NETRC_CREDENTIALS }}" > ~/.netrc
+          go env -w GOPRIVATE=$GO_PRIVATE
+          echo "$NETRC_CREDENTIALS" > ~/.netrc
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
