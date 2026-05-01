@@ -7,6 +7,11 @@ on:
         description: Docker image name
         required: true
         type: string
+      context:
+        description: Docker build context path
+        required: false
+        type: string
+        default: '.'
     secrets:
       REGISTRY_HOST:
         required: true
@@ -41,7 +46,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
-          context: .
+          context: ${{ inputs.context }}
           push: true
           tags: |
             ${{ secrets.REGISTRY_HOST }}/${{ inputs.image-name }}:${{ steps.tag.outputs.tag }}
