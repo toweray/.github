@@ -1,0 +1,22 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        description: Java version
+        required: false
+        type: string
+        default: '21'
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: toweray/.github/.github/actions/setup-java@master
+        with:
+          java-version: ${{ inputs.java-version }}
+
+      - name: Test
+        run: ./gradlew test
