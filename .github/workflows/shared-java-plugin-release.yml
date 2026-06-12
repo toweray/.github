@@ -1,0 +1,75 @@
+name: Release Plugin
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: false
+        type: string
+        default: '21'
+      image-name:
+        required: true
+        type: string
+        description: Must match Gradle project.name (shadowJar output)
+      tag:
+        required: false
+        type: string
+        default: latest
+      also-latest:
+        description: Additionally tag the pushed artifact as 'latest'
+        required: false
+        type: boolean
+        default: false
+      oras-version:
+        description: ORAS CLI version installed by setup-oras
+        required: false
+        type: string
+        default: '1.3.0'
+    secrets:
+      REGISTRY_HOST:
+        required: true
+      REGISTRY_USER:
+        required: true
+      REGISTRY_PASSWORD:
+        required: true
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: toweray/.github/.github/actions/setup-java@master
+        with:
+          java-version: ${{ inputs.java-version }}
+
+      - name: Build
+        run: ./gradlew shadowJar
+
+      - name: Setup oras
+        uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
+        with:
+          version: ${{ inputs.oras-version }}
+
+      - name: Login to registry
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          printf '%s' "$REGISTRY_PASSWORD" | oras login "$REGISTRY_HOST" \
+            -u "$REGISTRY_USER" \
+            --password-stdin
+
+      - name: Push artifact
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+        run: |
+          oras push "$REGISTRY_HOST/plugins/${{ inputs.image-name }}:${{ inputs.tag }}" \
+            "build/libs/${{ inputs.image-name }}.jar:application/java-archive"
+
+      - name: Tag as latest
+        if: inputs.also-latest
+        env:
+          REGISTRY_HOST: ${{ secrets.REGISTRY_HOST }}
+        run: |
+          oras tag "$REGISTRY_HOST/plugins/${{ inputs.image-name }}:${{ inputs.tag }}" latest
